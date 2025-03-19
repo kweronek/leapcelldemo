@@ -30,7 +30,7 @@ func main() {
     // Hier werden weitere Verbindungsparameter festgelegt.
     connStr := fmt.Sprintf(
         "host=ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech user=neondb_owner password=%s dbname=neondb sslmode=require",
-        dbPassword
+        dbPassword,
     )
 
     fmt.Println(connStr)
