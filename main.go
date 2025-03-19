@@ -1,40 +1,39 @@
 package main
 
 import (
-    "net/http"
-    "database/sql"
     "fmt"
+    "net/http"
 
     "github.com/gin-gonic/gin"
-    _ "github.com/lib/pq"
-    
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
 )
 
 type Konto struct {
-    ID      string  `json:"id"`
+    ID      string  `json:"id" gorm:"primaryKey"`
     UserID  string  `json:"user_id"`
     Balance float64 `json:"balance"`
 }
 
-var konten = []Konto{
-    {ID: "1", UserID: "7", Balance: 1000.0},
-    {ID: "2", UserID: "7", Balance: 500.0},
-}
+var db *gorm.DB
 
 func main() {
-    connStr := "postgresql://neondb_owner:npg_uHIeinM7x6Cp@ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
-//    connStr := "postgresql://[user]:[password]@[neon_hostname]/[dbname]?sslmode=require"
-    db, err := sql.Open("postgres", connStr)
-    if err != nil {
-        panic(err)
-    }
-    defer db.Close()
-    var version string
-    if err := db.QueryRow("select version()").Scan(&version); err != nil {
-        panic(err)
-    }
-    fmt.Printf("version=%s\n", version)
+    connStr := "host=ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech user=neondb_owner password=npg_uHIeinM7x6Cp dbname=neondb sslmode=require"
     
+    var err error
+    db, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
+    if err != nil {
+        panic("Fehler beim Verbinden zur Datenbank: " + err.Error())
+    }
+
+    // Automatisches Migration der Tabelle, falls nicht vorhanden
+    err = db.AutoMigrate(&Konto{})
+    if err != nil {
+        panic("Fehler bei Migration: " + err.Error())
+    }
+
+    fmt.Println("✅ Verbunden mit DB und Migration erfolgreich!")
+
     r := gin.Default()
 
     api := r.Group("/user/:userID/konto")
@@ -51,14 +50,13 @@ func main() {
 func getKonto(c *gin.Context) {
     userID := c.Param("userID")
     kontoID := c.Param("kontoID")
+    var konto Konto
 
-    for _, k := range konten {
-        if k.ID == kontoID && k.UserID == userID {
-            c.JSON(http.StatusOK, k)
-            return
-        }
+    if err := db.First(&konto, "id = ? AND user_id = ?", kontoID, userID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Konto nicht gefunden"})
+        return
     }
-    c.JSON(http.StatusNotFound, gin.H{"error": "Konto nicht gefunden"})
+    c.JSON(http.StatusOK, konto)
 }
 
 func createKonto(c *gin.Context) {
@@ -69,41 +67,48 @@ func createKonto(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
+
     newKonto.UserID = userID
-    konten = append(konten, newKonto)
+
+    if err := db.Create(&newKonto).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Erstellen"})
+        return
+    }
     c.JSON(http.StatusCreated, newKonto)
 }
 
 func updateKonto(c *gin.Context) {
     userID := c.Param("userID")
     kontoID := c.Param("kontoID")
-    var updateData Konto
+    var konto Konto
 
+    if err := db.First(&konto, "id = ? AND user_id = ?", kontoID, userID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Konto nicht gefunden"})
+        return
+    }
+
+    var updateData Konto
     if err := c.ShouldBindJSON(&updateData); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
 
-    for i, k := range konten {
-        if k.ID == kontoID && k.UserID == userID {
-            konten[i].Balance = updateData.Balance
-            c.JSON(http.StatusOK, konten[i])
-            return
-        }
-    }
-    c.JSON(http.StatusNotFound, gin.H{"error": "Konto nicht gefunden"})
+    konto.Balance = updateData.Balance
+    db.Save(&konto)
+
+    c.JSON(http.StatusOK, konto)
 }
 
 func deleteKonto(c *gin.Context) {
     userID := c.Param("userID")
     kontoID := c.Param("kontoID")
+    var konto Konto
 
-    for i, k := range konten {
-        if k.ID == kontoID && k.UserID == userID {
-            konten = append(konten[:i], konten[i+1:]...)
-            c.JSON(http.StatusOK, gin.H{"status": "Konto gelöscht"})
-            return
-        }
+    if err := db.First(&konto, "id = ? AND user_id = ?", kontoID, userID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Konto nicht gefunden"})
+        return
     }
-    c.JSON(http.StatusNotFound, gin.H{"error": "Konto nicht gefunden"})
+
+    db.Delete(&konto)
+    c.JSON(http.StatusOK, gin.H{"status": "Konto gelöscht"})
 }
