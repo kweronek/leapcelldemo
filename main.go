@@ -33,6 +33,8 @@ func main() {
         dbPassword,
     )
 
+    fmt.Println(connStr);
+    
     var err error
     db, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
     if err != nil {
