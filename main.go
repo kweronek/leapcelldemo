@@ -22,7 +22,7 @@ var konten = []Konto{
 }
 
 func main() {
-    connStr := "postgresql://neondb_owner:npg_uHIeinM7x6Cp@ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+    connStr := "postgresql://neondb_owner:npg_uHIeinM7x6Cp@ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
 //    connStr := "postgresql://[user]:[password]@[neon_hostname]/[dbname]?sslmode=require"
     db, err := sql.Open("postgres", connStr)
     if err != nil {
