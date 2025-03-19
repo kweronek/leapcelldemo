@@ -19,8 +19,8 @@ var db *gorm.DB
 
 func main() {
     
-    connStr := "host=ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech user=neondb_owner password=npg_dV6WSPa3uGNO dbname=neondb sslmode=require"
-/*
+ //   connStr := "host=ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech user=neondb_owner password=npg_dV6WSPa3uGNO dbname=neondb sslmode=require"
+
     // Lese das Datenbank-Passwort aus der Umgebungsvariable.
     dbPassword := os.Getenv("DB_PASSWORD")
     if dbPassword == "" {
@@ -34,7 +34,6 @@ func main() {
     )
 
     fmt.Println(connStr)
-*/
     
     var err error
     db, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
