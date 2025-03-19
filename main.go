@@ -18,14 +18,27 @@ type Konto struct {
 var db *gorm.DB
 
 func main() {
+    /*
     connStr := "host=ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech user=neondb_owner password=npg_uHIeinM7x6Cp dbname=neondb sslmode=require"
-    
+    */
+    // Lese das Datenbank-Passwort aus der Umgebungsvariable.
+    dbPassword := os.Getenv("DB_PASSWORD")
+    if dbPassword == "" {
+        panic("Die Umgebungsvariable DB_PASSWORD ist nicht gesetzt!")
+    }
+
+    // Hier werden weitere Verbindungsparameter festgelegt.
+    connStr := fmt.Sprintf(
+        "host=ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech user=neondb_owner password=%s dbname=neondb sslmode=require",
+        dbPassword,
+    )
+
     var err error
     db, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
     if err != nil {
         panic("Fehler beim Verbinden zur Datenbank: " + err.Error())
     }
-
+    
     // Automatisches Migration der Tabelle, falls nicht vorhanden
     err = db.AutoMigrate(&Konto{})
     if err != nil {
