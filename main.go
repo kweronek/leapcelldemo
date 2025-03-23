@@ -60,6 +60,7 @@ func main() {
         dbPassword,
     )
 */
+    
     var err error
     db, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
     if err != nil {
