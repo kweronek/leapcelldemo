@@ -25,16 +25,41 @@ type Konto struct {
 var db *gorm.DB
 
 func main() {
+    dbHost := os.Getenv("DB_HOST")
+    if dbHost == "" {
+        panic("Die Umgebungsvariable DB_HOST ist nicht gesetzt!")
+    }
+
+    dbUser := os.Getenv("DB_USER")
+    if dbUser == "" {
+        panic("Die Umgebungsvariable DB_USER ist nicht gesetzt!")
+    }
+
     dbPassword := os.Getenv("DB_PASSWORD")
     if dbPassword == "" {
         panic("Die Umgebungsvariable DB_PASSWORD ist nicht gesetzt!")
     }
 
+    dbName := os.Getenv("DB_NAME")
+    if dbName == "" {
+        fmtPrintln("Die Umgebungsvariable DB_NAME ist nicht gesetzt! ")
+    }
+
+    dbSSLMode := os.Getenv("DB_SSLMODE")
+    if dbSSLMode == "" {
+        panic("Die Umgebungsvariable DB_SSLMODE ist nicht gesetzt!")
+    }
+
+    connStr := fmt.Sprintf(
+        "host=%s user=%s password=%s dbname=%s sslmode=%s",
+        dbHost, dbUser, dbPassword, dbName, dbSSLMode,
+    )
+/*
     connStr := fmt.Sprintf(
         "host=ep-ancient-shadow-a5aui0rq-pooler.us-east-2.aws.neon.tech user=neondb_owner password=%s dbname=neondb sslmode=require",
         dbPassword,
     )
-
+*/
     var err error
     db, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
     if err != nil {
